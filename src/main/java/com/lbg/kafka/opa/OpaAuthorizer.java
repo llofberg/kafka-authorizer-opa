@@ -72,7 +72,7 @@ public class OpaAuthorizer implements Authorizer {
       }
 
       @Cleanup BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-      return "{\"result\":true}".equals(br.readLine());
+      return (boolean) gson.fromJson(br.readLine(), Map.class).get("result");
     } catch (IOException e) {
       return allowOnError;
     }
