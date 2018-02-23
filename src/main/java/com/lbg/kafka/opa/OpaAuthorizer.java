@@ -1,5 +1,8 @@
 package com.lbg.kafka.opa;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import kafka.security.auth.Acl;
 import kafka.security.auth.Authorizer;
 import kafka.security.auth.Operation;
@@ -16,33 +19,59 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import static kafka.network.RequestChannel.Session;
 
 @Slf4j
 public class OpaAuthorizer implements Authorizer {
+
+  private final static String OPA_URL_CONFIG = "opa.authorizer.url";
+  private final static String OPA_DENY_ON_ERROR_CONFIG = "opa.authorizer.allow.on.error";
+  private final static String OPA_CACHE_INITIAL_CAPACITY_CONFIG = "opa.cache.initial.capacity";
+  private final static String OPA_CACHE_MAXIMUM_SIZE_CONFIG = "opa.cache.maximum.size";
+  private final static String OPA_CACHE_EXPIRE_AFTER_MS_CONFIG = "opa.cache.expire.after.ms";
+
+  private String opaUrl;
+  private boolean allowOnError;
+  private int initialCapacity;
+  private int maximumSize;
+  private long expireAfterMs;
+
   private final Map<String, Object> configs = new HashMap<>();
+  private LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
+    .initialCapacity(initialCapacity)
+    .maximumSize(maximumSize)
+    .expireAfterWrite(expireAfterMs, TimeUnit.MILLISECONDS)
+    .build(new CacheLoader<String, Boolean>() {
+      @Override
+      public Boolean load(String data) {
+        return allow(data);
+      }
+    });
 
-  private boolean allow(String data) throws IOException {
-    // TODO: Caching
-    String spec = "http://opa:8181/v1/data/kafka/authz/allow";
-    HttpURLConnection conn = (HttpURLConnection) new URL(spec).openConnection();
+  private boolean allow(String data) {
+    try {
+      HttpURLConnection conn = (HttpURLConnection) new URL(opaUrl).openConnection();
 
-    conn.setDoOutput(true);
-    conn.setRequestMethod("POST");
-    conn.setRequestProperty("Content-Type", "application/json");
+      conn.setDoOutput(true);
+      conn.setRequestMethod("POST");
+      conn.setRequestProperty("Content-Type", "application/json");
 
-    OutputStream os = conn.getOutputStream();
-    os.write(data.getBytes());
-    os.flush();
+      OutputStream os = conn.getOutputStream();
+      os.write(data.getBytes());
+      os.flush();
 
-    if (log.isTraceEnabled()) {
-      log.trace("Response code: {}, Request data:{}", conn.getResponseCode(), data);
+      if (log.isTraceEnabled()) {
+        log.trace("Response code: {}, Request data: {}", conn.getResponseCode(), data);
+      }
+
+      @Cleanup BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
+      return "{\"result\":true}".equals(br.readLine());
+    } catch (IOException e) {
+      return allowOnError;
     }
-
-    @Cleanup BufferedReader br = new BufferedReader(new InputStreamReader((conn.getInputStream())));
-
-    return "{\"result\":true}".equals(br.readLine());
   }
 
   public boolean authorize(Session session, Operation operation, Resource resource) {
@@ -52,15 +81,22 @@ public class OpaAuthorizer implements Authorizer {
       "\"Resource\":\"" + resource.toString() + "\"," +
       "\"ClientAddress\":\"" + session.clientAddress().toString() + "\"}}";
     try {
-      return allow(query);
-    } catch (IOException e) {
-      log.error("Failed to query OPA: {}", query, e);
-      return false;
+      return cache.get(query);
+    } catch (ExecutionException e) {
+      return allowOnError;
     }
   }
 
   public void configure(Map<String, ?> configs) {
     this.configs.putAll(configs);
+    if (log.isTraceEnabled()) {
+      log.trace("CONFIGS: {}", this.configs);
+    }
+    opaUrl = (String) configs.get(OPA_URL_CONFIG);
+    allowOnError = Boolean.valueOf((String) configs.get(OPA_DENY_ON_ERROR_CONFIG));
+    initialCapacity = Integer.parseInt((String) configs.get(OPA_CACHE_INITIAL_CAPACITY_CONFIG));
+    maximumSize = Integer.parseInt((String) configs.get(OPA_CACHE_MAXIMUM_SIZE_CONFIG));
+    expireAfterMs = Long.parseLong((String) configs.get(OPA_CACHE_EXPIRE_AFTER_MS_CONFIG));
   }
 
   public void addAcls(scala.collection.immutable.Set<Acl> acls, Resource resource) {
@@ -88,5 +124,4 @@ public class OpaAuthorizer implements Authorizer {
 
   public void close() {
   }
-
 }
