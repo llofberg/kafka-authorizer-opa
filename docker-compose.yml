@@ -1,5 +1,13 @@
 version: "2"
 services:
+  opa:
+    hostname: opa
+    image: openpolicyagent/opa:0.7.0
+    ports:
+      - 8181:8181
+    command: "run --server --log-level=debug /data/kafka_authz.rego"
+    volumes:
+      - ./src/test/resources/:/data
   zookeeper:
     image: confluentinc/cp-zookeeper:3.2.2-1
     environment:
@@ -11,6 +19,7 @@ services:
     image: confluentinc/cp-kafka:3.2.2-1
     links:
       - zookeeper
+      - opa
     ports:
       - "9092:9092"
     environment:
@@ -26,11 +35,3 @@ services:
     volumes:
       - ./:/data
       - ./target/kafka-authorizer-opa-1.0-SNAPSHOT-package/share/java/kafka-authorizer-opa/:/jars
-  opa:
-    hostname: opa
-    image: openpolicyagent/opa:0.7.0
-    ports:
-      - 8181:8181
-    command: "run --server --log-level=debug /data/kafka_authz.rego"
-    volumes:
-      - ./src/test/resources/:/data
