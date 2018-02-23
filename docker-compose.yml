@@ -1,0 +1,30 @@
+version: "2"
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:3.2.2-1
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      zk_id: "1"
+  kafka:
+    hostname: kafka
+#    image: kafka-opa:0.1
+    image: confluentinc/cp-kafka:3.2.2-1
+    links:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://:9092"
+      KAFKA_AUTHORIZER_CLASS_NAME: com.lbg.kafka.opa.OpaAuthorizer
+      CLASSPATH: /data/target/kafka-authorizer-opa-1.0-SNAPSHOT-package/share/java/kafka-authorizer-opa/kafka-authorizer-opa-1.0-SNAPSHOT.jar
+    volumes:
+      - ./:/data
+  opa:
+    hostname: opa
+    image: openpolicyagent/opa:0.7.0
+    ports:
+      - 8181:8181
+    command: "run --server --log-level=debug /data/kafka.rego"
+    volumes:
+      - ./:/data
