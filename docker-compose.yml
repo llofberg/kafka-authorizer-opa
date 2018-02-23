@@ -15,7 +15,6 @@ services:
       zk_id: "1"
   kafka:
     hostname: kafka
-#    image: kafka-opa:0.1
     image: confluentinc/cp-kafka:3.2.2-1
     links:
       - zookeeper
@@ -33,5 +32,4 @@ services:
       KAFKA_OPA_CACHE_EXPIRE_AFTER_MS: 600000
       CLASSPATH: /jars/kafka-authorizer-opa-1.0-SNAPSHOT.jar:/jars/gson-2.8.2.jar
     volumes:
-      - ./:/data
       - ./target/kafka-authorizer-opa-1.0-SNAPSHOT-package/share/java/kafka-authorizer-opa/:/jars
