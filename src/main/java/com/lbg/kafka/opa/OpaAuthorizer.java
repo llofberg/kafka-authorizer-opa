@@ -49,12 +49,14 @@ public class OpaAuthorizer implements Authorizer {
     .initialCapacity(initialCapacity)
     .maximumSize(maximumSize)
     .expireAfterWrite(expireAfterMs, TimeUnit.MILLISECONDS)
-    .build(new CacheLoader<String, Boolean>() {
-      @Override
-      public Boolean load(String data) {
-        return allow(data);
+    .build(
+      new CacheLoader<String, Boolean>() {
+        @Override
+        public Boolean load(String data) {
+          return allow(data);
+        }
       }
-    });
+    );
 
   private boolean allow(String data) {
     try {
