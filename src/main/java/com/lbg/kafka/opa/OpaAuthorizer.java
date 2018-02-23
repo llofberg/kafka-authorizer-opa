@@ -80,14 +80,8 @@ public class OpaAuthorizer implements Authorizer {
   }
 
   public boolean authorize(Session session, Operation operation, Resource resource) {
-    String query = gson.toJson(new Msg(new Msg.Input(
-      session.principal().toString(),
-      operation.toString(),
-      resource.toString(),
-      session.clientAddress().toString())
-    ));
     try {
-      return cache.get(query);
+      return cache.get(new Gson().toJson(new Msg(new Msg.Input(operation, resource, session))));
     } catch (ExecutionException e) {
       return allowOnError;
     }
@@ -137,10 +131,9 @@ public class OpaAuthorizer implements Authorizer {
 
     @Data
     static class Input {
-      private final String Principal;
-      private final String Operation;
-      private final String Resource;
-      private final String ClientAddress;
+      private final Operation operation;
+      private final Resource resource;
+      private final Session session;
     }
   }
 }
