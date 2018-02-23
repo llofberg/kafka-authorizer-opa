@@ -3,11 +3,13 @@ package com.lbg.kafka.opa;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.gson.Gson;
 import kafka.security.auth.Acl;
 import kafka.security.auth.Authorizer;
 import kafka.security.auth.Operation;
 import kafka.security.auth.Resource;
 import lombok.Cleanup;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.security.auth.KafkaPrincipal;
 
@@ -38,6 +40,8 @@ public class OpaAuthorizer implements Authorizer {
   private int initialCapacity;
   private int maximumSize;
   private long expireAfterMs;
+
+  private final Gson gson = new Gson();
 
   private final Map<String, Object> configs = new HashMap<>();
   private LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
@@ -75,11 +79,12 @@ public class OpaAuthorizer implements Authorizer {
   }
 
   public boolean authorize(Session session, Operation operation, Resource resource) {
-    String query = "{\"input\":{" +
-      "\"Principal\":\"" + session.principal().toString() + "\"," +
-      "\"Operation\":\"" + operation.toString() + "\"," +
-      "\"Resource\":\"" + resource.toString() + "\"," +
-      "\"ClientAddress\":\"" + session.clientAddress().toString() + "\"}}";
+    String query = gson.toJson(new Msg(new Msg.Input(
+      session.principal().toString(),
+      operation.toString(),
+      resource.toString(),
+      session.clientAddress().toString())
+    ));
     try {
       return cache.get(query);
     } catch (ExecutionException e) {
@@ -123,5 +128,18 @@ public class OpaAuthorizer implements Authorizer {
   }
 
   public void close() {
+  }
+
+  @Data
+  static class Msg {
+    private final Input input;
+
+    @Data
+    static class Input {
+      private final String Principal;
+      private final String Operation;
+      private final String Resource;
+      private final String ClientAddress;
+    }
   }
 }
