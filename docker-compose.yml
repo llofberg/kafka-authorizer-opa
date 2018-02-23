@@ -31,6 +31,6 @@ services:
     image: openpolicyagent/opa:0.7.0
     ports:
       - 8181:8181
-    command: "run --server --log-level=debug /data/kafka.rego"
+    command: "run --server --log-level=debug /data/kafka_authz.rego"
     volumes:
-      - ./:/data
+      - ./src/test/resources/:/data
