@@ -29,7 +29,7 @@ import static kafka.network.RequestChannel.Session;
 @Slf4j
 public class OpaAuthorizer implements Authorizer {
 
-  private final static String OPA_URL_CONFIG = "opa.authorizer.url";
+  private final static String OPA_AUTHORIZER_URL_CONFIG = "opa.authorizer.url";
   private final static String OPA_DENY_ON_ERROR_CONFIG = "opa.authorizer.allow.on.error";
   private final static String OPA_CACHE_INITIAL_CAPACITY_CONFIG = "opa.cache.initial.capacity";
   private final static String OPA_CACHE_MAXIMUM_SIZE_CONFIG = "opa.cache.maximum.size";
@@ -44,6 +44,7 @@ public class OpaAuthorizer implements Authorizer {
   private final Gson gson = new Gson();
 
   private final Map<String, Object> configs = new HashMap<>();
+
   private LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
     .initialCapacity(initialCapacity)
     .maximumSize(maximumSize)
@@ -97,7 +98,7 @@ public class OpaAuthorizer implements Authorizer {
     if (log.isTraceEnabled()) {
       log.trace("CONFIGS: {}", this.configs);
     }
-    opaUrl = (String) configs.get(OPA_URL_CONFIG);
+    opaUrl = (String) configs.get(OPA_AUTHORIZER_URL_CONFIG);
     allowOnError = Boolean.valueOf((String) configs.get(OPA_DENY_ON_ERROR_CONFIG));
     initialCapacity = Integer.parseInt((String) configs.get(OPA_CACHE_INITIAL_CAPACITY_CONFIG));
     maximumSize = Integer.parseInt((String) configs.get(OPA_CACHE_MAXIMUM_SIZE_CONFIG));
