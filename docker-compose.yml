@@ -9,13 +9,13 @@ services:
     volumes:
       - ./src/test/resources/:/data
   zookeeper:
-    image: confluentinc/cp-zookeeper:3.2.2-1
+    image: confluentinc/cp-zookeeper:4.0.0-3
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       zk_id: "1"
   kafka:
     hostname: kafka
-    image: confluentinc/cp-kafka:3.2.2-1
+    image: confluentinc/cp-kafka:4.0.0-3
     links:
       - zookeeper
       - opa
