@@ -45,15 +45,15 @@ public class OpaAuthorizer implements Authorizer {
 
   private final Map<String, Object> configs = new HashMap<>();
 
-  private LoadingCache<String, Boolean> cache = CacheBuilder.newBuilder()
+  private LoadingCache<Msg, Boolean> cache = CacheBuilder.newBuilder()
     .initialCapacity(initialCapacity)
     .maximumSize(maximumSize)
     .expireAfterWrite(expireAfterMs, TimeUnit.MILLISECONDS)
     .build(
-      new CacheLoader<String, Boolean>() {
+      new CacheLoader<Msg, Boolean>() {
         @Override
-        public Boolean load(String data) {
-          return allow(data);
+        public Boolean load(Msg data) {
+          return allow(new Gson().toJson(data));
         }
       }
     );
@@ -83,7 +83,7 @@ public class OpaAuthorizer implements Authorizer {
 
   public boolean authorize(Session session, Operation operation, Resource resource) {
     try {
-      return cache.get(new Gson().toJson(new Msg(new Msg.Input(operation, resource, session))));
+      return cache.get(new Msg(new Msg.Input(operation, resource, session)));
     } catch (ExecutionException e) {
       return allowOnError;
     }
