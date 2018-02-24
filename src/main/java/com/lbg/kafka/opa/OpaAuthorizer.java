@@ -52,13 +52,13 @@ public class OpaAuthorizer implements Authorizer {
     .build(
       new CacheLoader<Msg.Input, Boolean>() {
         @Override
-        public Boolean load(Msg.Input data) {
-          return allow(gson.toJson(new Msg(data)));
+        public Boolean load(Msg.Input input) {
+          return allow(input);
         }
       }
     );
 
-  private boolean allow(String data) {
+  private boolean allow(Msg.Input input) {
     try {
       HttpURLConnection conn = (HttpURLConnection) new URL(opaUrl).openConnection();
 
@@ -66,6 +66,7 @@ public class OpaAuthorizer implements Authorizer {
       conn.setRequestMethod("POST");
       conn.setRequestProperty("Content-Type", "application/json");
 
+      String data = gson.toJson(new Msg(input));
       OutputStream os = conn.getOutputStream();
       os.write(data.getBytes());
       os.flush();
