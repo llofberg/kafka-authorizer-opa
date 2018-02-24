@@ -53,7 +53,7 @@ public class OpaAuthorizer implements Authorizer {
       new CacheLoader<Msg.Input, Boolean>() {
         @Override
         public Boolean load(Msg.Input data) {
-          return allow(new Gson().toJson(new Msg(data)));
+          return allow(gson.toJson(new Msg(data)));
         }
       }
     );
