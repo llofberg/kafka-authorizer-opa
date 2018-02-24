@@ -30,10 +30,10 @@ import static kafka.network.RequestChannel.Session;
 public class OpaAuthorizer implements Authorizer {
 
   private final static String OPA_AUTHORIZER_URL_CONFIG = "opa.authorizer.url";
-  private final static String OPA_DENY_ON_ERROR_CONFIG = "opa.authorizer.allow.on.error";
-  private final static String OPA_CACHE_INITIAL_CAPACITY_CONFIG = "opa.cache.initial.capacity";
-  private final static String OPA_CACHE_MAXIMUM_SIZE_CONFIG = "opa.cache.maximum.size";
-  private final static String OPA_CACHE_EXPIRE_AFTER_MS_CONFIG = "opa.cache.expire.after.ms";
+  private final static String OPA_AUTHORIZER_DENY_ON_ERROR_CONFIG = "opa.authorizer.allow.on.error";
+  private final static String OPA_AUTHORIZER_CACHE_INITIAL_CAPACITY_CONFIG = "opa.authorizer.cache.initial.capacity";
+  private final static String OPA_AUTHORIZER_CACHE_MAXIMUM_SIZE_CONFIG = "opa.authorizer.cache.maximum.size";
+  private final static String OPA_AUTHORIZER_CACHE_EXPIRE_AFTER_MS_CONFIG = "opa.authorizer.cache.expire.after.ms";
 
   private String opaUrl;
   private boolean allowOnError;
@@ -95,10 +95,10 @@ public class OpaAuthorizer implements Authorizer {
       log.trace("CONFIGS: {}", this.configs);
     }
     opaUrl = (String) configs.get(OPA_AUTHORIZER_URL_CONFIG);
-    allowOnError = Boolean.valueOf((String) configs.get(OPA_DENY_ON_ERROR_CONFIG));
-    initialCapacity = Integer.parseInt((String) configs.get(OPA_CACHE_INITIAL_CAPACITY_CONFIG));
-    maximumSize = Integer.parseInt((String) configs.get(OPA_CACHE_MAXIMUM_SIZE_CONFIG));
-    expireAfterMs = Long.parseLong((String) configs.get(OPA_CACHE_EXPIRE_AFTER_MS_CONFIG));
+    allowOnError = Boolean.valueOf((String) configs.get(OPA_AUTHORIZER_DENY_ON_ERROR_CONFIG));
+    initialCapacity = Integer.parseInt((String) configs.get(OPA_AUTHORIZER_CACHE_INITIAL_CAPACITY_CONFIG));
+    maximumSize = Integer.parseInt((String) configs.get(OPA_AUTHORIZER_CACHE_MAXIMUM_SIZE_CONFIG));
+    expireAfterMs = Long.parseLong((String) configs.get(OPA_AUTHORIZER_CACHE_EXPIRE_AFTER_MS_CONFIG));
   }
 
   public void addAcls(scala.collection.immutable.Set<Acl> acls, Resource resource) {
